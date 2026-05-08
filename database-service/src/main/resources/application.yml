@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: database-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/task_manager
+    username: task_manager
+    password: task_manager
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

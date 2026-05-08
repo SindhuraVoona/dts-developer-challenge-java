@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-service
+  namespace: task-manager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend-service
+  template:
+    metadata:
+      labels:
+        app: backend-service
+    spec:
+      initContainers:
+        # Wait until database-service is ready before accepting traffic
+        - name: wait-for-database-service
+          image: busybox:1.37
+          command: ['sh', '-c', 'until nc -z database-service 8081; do echo "Waiting for database-service..."; sleep 3; done']
+      containers:
+        - name: backend-service
+          # Replace with your ECR image URI, e.g.:
+          # 123456789012.dkr.ecr.eu-west-2.amazonaws.com/backend-service:latest
+          image: backend-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: backend-config
+          readinessProbe:
+            httpGet:
+              path: /api/tasks
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /api/tasks
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"

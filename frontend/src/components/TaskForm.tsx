@@ -7,6 +7,11 @@ interface Props {
 }
 
 const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'COMPLETED'];
+const STATUS_LABELS: Record<TaskStatus, string> = {
+  TODO: 'To Do',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+};
 
 export default function TaskForm({ onCreated }: Props) {
   const [title, setTitle] = useState('');
@@ -21,11 +26,13 @@ export default function TaskForm({ onCreated }: Props) {
     setError(null);
     setSubmitting(true);
     try {
+      // datetime-local gives "YYYY-MM-DDTHH:mm" (16 chars); backend needs seconds too
+      const normalised = dueDateTime.length === 16 ? `${dueDateTime}:00` : dueDateTime.slice(0, 19);
       const payload: TaskCreateRequest = {
         title,
         description: description || undefined,
         status,
-        dueDateTime: dueDateTime.replace('T', 'T').slice(0, 19),
+        dueDateTime: normalised,
       };
       await createTask(payload);
       setTitle('');
@@ -40,66 +47,79 @@ export default function TaskForm({ onCreated }: Props) {
     }
   };
 
+  const handleClear = () => {
+    setTitle('');
+    setDescription('');
+    setStatus('TODO');
+    setDueDateTime('');
+    setError(null);
+  };
+
   return (
-    <form className="task-form" onSubmit={handleSubmit}>
-      <h2>New Task</h2>
+    <>
+      <h2>Create Task</h2>
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div className="form-group">
-        <label htmlFor="title">Title *</label>
-        <input
-          id="title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Task title"
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="description">Description</label>
-        <textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional description"
-          rows={3}
-        />
-      </div>
-
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="status">Status *</label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as TaskStatus)}
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s.replace('_', ' ')}
-              </option>
-            ))}
-          </select>
+      <form className="form" onSubmit={handleSubmit}>
+        <div className="row">
+          <div className="field">
+            <label htmlFor="title">Title</label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Task title"
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="status">Status</label>
+            <select
+              id="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as TaskStatus)}
+            >
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="dueDateTime">Due Date &amp; Time *</label>
-          <input
-            id="dueDateTime"
-            type="datetime-local"
-            value={dueDateTime}
-            onChange={(e) => setDueDateTime(e.target.value)}
-            required
-          />
+        <div className="row">
+          <div className="field">
+            <label htmlFor="description">Description (optional)</label>
+            <input
+              id="description"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Task description"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="dueDateTime">Due date/time</label>
+            <input
+              id="dueDateTime"
+              type="datetime-local"
+              value={dueDateTime}
+              onChange={(e) => setDueDateTime(e.target.value)}
+              required
+            />
+          </div>
         </div>
-      </div>
 
-      <button type="submit" className="btn btn-primary" disabled={submitting}>
-        {submitting ? 'Creating…' : 'Create Task'}
-      </button>
-    </form>
+        <div className="actions">
+          <button type="submit" className="btn primary" disabled={submitting}>
+            {submitting ? 'Creating…' : 'Create Task'}
+          </button>
+          <button type="button" className="btn" onClick={handleClear}>
+            Clear
+          </button>
+        </div>
+      </form>
+    </>
   );
 }

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-service-config
+  namespace: task-manager
+data:
+  # Points to the postgres Service name within the cluster
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/task_manager
+  SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+  SPRING_LIQUIBASE_ENABLED: "true"

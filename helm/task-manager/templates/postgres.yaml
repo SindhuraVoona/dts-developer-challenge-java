@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "task-manager.labels" . | nindent 4 }}
+    {{- include "task-manager.selectorLabels" (dict "root" . "component" "postgres") | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "task-manager.selectorLabels" (dict "root" . "component" "postgres") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "task-manager.selectorLabels" (dict "root" . "component" "postgres") | nindent 8 }}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.postgres.credentials.username }}
+                - -d
+                - {{ .Values.postgres.credentials.database }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "task-manager.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "task-manager.selectorLabels" (dict "root" . "component" "postgres") | nindent 4 }}
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP

@@ -1,0 +1,84 @@
+# ── Global ──────────────────────────────────────────────────────────────────
+namespace: task-manager
+
+# ── PostgreSQL ───────────────────────────────────────────────────────────────
+postgres:
+  image: postgres:17-alpine
+  storage: 5Gi
+  # storageClassName: gp3   # uncomment for EKS with EBS CSI driver
+  credentials:
+    database: task_manager
+    username: task_manager
+    # IMPORTANT: override this in a production values file or via --set
+    password: CHANGE_ME_IN_PRODUCTION
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# ── database-service ─────────────────────────────────────────────────────────
+databaseService:
+  image:
+    # Set to your ECR URI in production, e.g.:
+    # 123456789012.dkr.ecr.eu-west-2.amazonaws.com/database-service
+    repository: database-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 8081
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "384Mi"
+    limits:
+      cpu: "500m"
+      memory: "768Mi"
+
+# ── backend-service ───────────────────────────────────────────────────────────
+backend:
+  image:
+    repository: backend-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 8080
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "384Mi"
+    limits:
+      cpu: "500m"
+      memory: "768Mi"
+
+# ── frontend ──────────────────────────────────────────────────────────────────
+frontend:
+  image:
+    repository: frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 80
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+ingress:
+  # "nginx" for nginx ingress controller (any cluster)
+  # "alb"   for AWS ALB ingress controller on EKS
+  className: nginx
+  host: ""          # set to your domain, e.g. task-manager.example.gov.uk
+  tls: false        # set to true + provide a cert secret name for HTTPS
+  tlsSecretName: task-manager-tls
+  # ALB-specific annotations (only used when className = alb)
+  alb:
+    scheme: internet-facing
+    targetType: ip
+    certificateArn: ""   # arn:aws:acm:REGION:ACCOUNT:certificate/CERT_ID

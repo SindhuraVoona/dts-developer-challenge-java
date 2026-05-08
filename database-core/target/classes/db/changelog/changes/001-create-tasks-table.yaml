@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-tasks-table
+      author: copilot
+      changes:
+        - createTable:
+            tableName: tasks
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: status
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: due_date_time
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: Review case bundle }
+              - column: { name: description, value: Check documents before the afternoon hearing. }
+              - column: { name: status, value: TODO }
+              - column: { name: due_date_time, valueDate: 2026-05-07T09:00:00 }
+              - column: { name: created_at, valueDate: 2026-05-06T09:00:00 }
+              - column: { name: updated_at, valueDate: 2026-05-06T09:00:00 }
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: Call applicant representative }
+              - column: { name: description, value: Confirm missing evidence has been received. }
+              - column: { name: status, value: IN_PROGRESS }
+              - column: { name: due_date_time, valueDate: 2026-05-06T18:00:00 }
+              - column: { name: created_at, valueDate: 2026-05-06T10:00:00 }
+              - column: { name: updated_at, valueDate: 2026-05-06T10:00:00 }
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: Archive completed appeal }
+              - column: { name: description, value: Move final documents into the completed folder. }
+              - column: { name: status, value: COMPLETED }
+              - column: { name: due_date_time, valueDate: 2026-05-06T11:00:00 }
+              - column: { name: created_at, valueDate: 2026-05-06T08:00:00 }
+              - column: { name: updated_at, valueDate: 2026-05-06T08:30:00 }

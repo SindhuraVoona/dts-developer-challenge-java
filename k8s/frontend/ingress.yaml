@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: task-manager-ingress
+  namespace: task-manager
+  annotations:
+    # ── Option A: nginx Ingress Controller (default, works on any cluster) ──
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+
+    # ── Option B: AWS ALB Ingress Controller on EKS (comment out Option A) ──
+    # kubernetes.io/ingress.class: alb
+    # alb.ingress.kubernetes.io/scheme: internet-facing
+    # alb.ingress.kubernetes.io/target-type: ip
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:REGION:ACCOUNT:certificate/CERT_ID
+    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+spec:
+  rules:
+    - http:
+        paths:
+          # Route /api/* → backend-service (strips the /api prefix rewrite happens via nginx annotation above)
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8080
+          # Route everything else → frontend (React SPA)
+          - path: /()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+  # Uncomment and set your domain when you have one:
+  # tls:
+  #   - hosts:
+  #       - task-manager.example.gov.uk
+  #     secretName: task-manager-tls

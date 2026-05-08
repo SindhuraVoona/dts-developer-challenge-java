@@ -23,6 +23,15 @@ public class GlobalExceptionHandler {
             .body(buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI(), List.of()));
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleServiceUnavailable(ServiceUnavailableException exception,
+                                                                   HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE,
+                "The task service is temporarily unavailable. Please try again shortly.",
+                request.getRequestURI(), List.of()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception,
                                                           HttpServletRequest request) {

@@ -5,9 +5,11 @@ import TaskItem from './TaskItem';
 
 interface Props {
   refreshKey: number;
+  onRefresh: () => void;
+  onEdit: (task: Task) => void;
 }
 
-export default function TaskList({ refreshKey }: Props) {
+export default function TaskList({ refreshKey, onRefresh, onEdit }: Props) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,30 +27,33 @@ export default function TaskList({ refreshKey }: Props) {
     load();
   }, [refreshKey]);
 
-  if (loading) {
-    return <div className="state-message">Loading tasks…</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="alert alert-error">
-        {error}
-        <button className="btn btn-secondary" onClick={load} style={{ marginLeft: 12 }}>
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return <div className="state-message">No tasks yet. Create one above!</div>;
-  }
-
   return (
-    <div className="task-list">
-      {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} onChanged={load} />
-      ))}
-    </div>
+    <>
+      <div className="card-header">
+        <h2>Tasks</h2>
+        <button className="btn" onClick={onRefresh}>Refresh</button>
+      </div>
+
+      {error && (
+        <div className="alert alert-error">
+          {error}
+          <button className="btn" onClick={load} style={{ marginLeft: 12 }}>Retry</button>
+        </div>
+      )}
+
+      {loading && <div className="loading">Loading tasks…</div>}
+
+      {!loading && !error && tasks.length === 0 && (
+        <div className="empty">No tasks yet. Create one above.</div>
+      )}
+
+      {!loading && !error && tasks.length > 0 && (
+        <div className="table">
+          {tasks.map((task) => (
+            <TaskItem key={task.id} task={task} onChanged={load} onEdit={onEdit} />
+          ))}
+        </div>
+      )}
+    </>
   );
 }

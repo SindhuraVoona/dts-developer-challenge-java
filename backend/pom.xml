@@ -5,39 +5,39 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.0-RC1</version>
-        <relativePath/>
+        <groupId>uk.gov.hmcts.dts</groupId>
+        <artifactId>task-manager-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <groupId>uk.gov.hmcts.dts</groupId>
-    <artifactId>task-manager-api</artifactId>
+    <artifactId>backend-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>task-manager-api</name>
-    <description>HMCTS DTS developer technical test backend</description>
-
-    <properties>
-        <java.version>21</java.version>
-    </properties>
+    <name>backend-service</name>
+    <description>HMCTS DTS developer technical test backend - service and API layer</description>
 
     <dependencies>
+        <dependency>
+            <groupId>uk.gov.hmcts.dts</groupId>
+            <artifactId>database-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

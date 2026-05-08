@@ -7,38 +7,29 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import uk.gov.hmcts.dts.taskmanager.dto.TaskCreateRequest;
 import uk.gov.hmcts.dts.taskmanager.dto.TaskResponse;
-import uk.gov.hmcts.dts.taskmanager.entity.TaskEntity;
 import uk.gov.hmcts.dts.taskmanager.entity.TaskStatus;
 import uk.gov.hmcts.dts.taskmanager.exception.TaskNotFoundException;
-import uk.gov.hmcts.dts.taskmanager.mapper.TaskMapper;
-import uk.gov.hmcts.dts.taskmanager.repository.TaskRepository;
 
 @ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 
     @Mock
-    private TaskRepository taskRepository;
+    private TaskDataGateway taskDataGateway;
 
-    private TaskMapper taskMapper;
-
-    @InjectMocks
     private TaskService taskService;
 
     @BeforeEach
     void setUp() {
-        taskMapper = new TaskMapper();
-        taskService = new TaskService(taskRepository, taskMapper);
+        taskService = new TaskService(taskDataGateway);
     }
 
     @Test
@@ -49,8 +40,7 @@ class TaskServiceTest {
             TaskStatus.TODO,
             LocalDateTime.of(2026, 5, 10, 9, 0)
         );
-        TaskEntity saved = taskEntity(1L, TaskStatus.TODO);
-        when(taskRepository.save(org.mockito.ArgumentMatchers.any(TaskEntity.class))).thenReturn(saved);
+        when(taskDataGateway.createTask(request)).thenReturn(taskResponse(1L, TaskStatus.TODO));
 
         TaskResponse response = taskService.createTask(request);
 
@@ -61,7 +51,7 @@ class TaskServiceTest {
 
     @Test
     void shouldReturnAllTasks() {
-        when(taskRepository.findAll()).thenReturn(List.of(taskEntity(1L, TaskStatus.TODO), taskEntity(2L, TaskStatus.COMPLETED)));
+        when(taskDataGateway.getAllTasks()).thenReturn(List.of(taskResponse(1L, TaskStatus.TODO), taskResponse(2L, TaskStatus.COMPLETED)));
 
         List<TaskResponse> tasks = taskService.getAllTasks();
 
@@ -71,10 +61,7 @@ class TaskServiceTest {
 
     @Test
     void shouldUpdateTaskStatus() {
-        TaskEntity existing = taskEntity(1L, TaskStatus.TODO);
-        TaskEntity updated = taskEntity(1L, TaskStatus.IN_PROGRESS);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(taskRepository.save(existing)).thenReturn(updated);
+        when(taskDataGateway.updateTaskStatus(1L, TaskStatus.IN_PROGRESS)).thenReturn(taskResponse(1L, TaskStatus.IN_PROGRESS));
 
         TaskResponse response = taskService.updateTaskStatus(1L, TaskStatus.IN_PROGRESS);
 
@@ -83,32 +70,29 @@ class TaskServiceTest {
 
     @Test
     void shouldDeleteTask() {
-        TaskEntity existing = taskEntity(1L, TaskStatus.TODO);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(existing));
-
         taskService.deleteTask(1L);
 
-        verify(taskRepository).delete(existing);
+        verify(taskDataGateway).deleteTask(1L);
     }
 
     @Test
     void shouldThrowWhenTaskIsMissing() {
-        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+        when(taskDataGateway.getTaskById(99L)).thenThrow(new TaskNotFoundException(99L));
 
         assertThatThrownBy(() -> taskService.getTaskById(99L))
             .isInstanceOf(TaskNotFoundException.class)
             .hasMessage("Task with id 99 was not found");
     }
 
-    private TaskEntity taskEntity(Long id, TaskStatus status) {
-        TaskEntity entity = new TaskEntity();
-        entity.setId(id);
-        entity.setTitle("Review file");
-        entity.setDescription("Review the case file");
-        entity.setStatus(status);
-        entity.setDueDateTime(LocalDateTime.of(2026, 5, 10, 9, 0));
-        entity.setCreatedAt(LocalDateTime.of(2026, 5, 1, 9, 0));
-        entity.setUpdatedAt(LocalDateTime.of(2026, 5, 1, 9, 30));
-        return entity;
+    private TaskResponse taskResponse(Long id, TaskStatus status) {
+        return new TaskResponse(
+            id,
+            "Review file",
+            "Review the case file",
+            status,
+            LocalDateTime.of(2026, 5, 10, 9, 0),
+            LocalDateTime.of(2026, 5, 1, 9, 0),
+            LocalDateTime.of(2026, 5, 1, 9, 30)
+        );
     }
 }

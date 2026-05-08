@@ -5,9 +5,8 @@ import type { Task, TaskStatus } from '../types/task';
 interface Props {
   task: Task;
   onChanged: () => void;
+  onEdit: (task: Task) => void;
 }
-
-const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'COMPLETED'];
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
   TODO: 'To Do',
@@ -16,20 +15,27 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 const STATUS_CLASS: Record<TaskStatus, string> = {
-  TODO: 'badge-todo',
-  IN_PROGRESS: 'badge-progress',
-  COMPLETED: 'badge-done',
+  TODO: 'pending',
+  IN_PROGRESS: 'in-progress',
+  COMPLETED: 'completed',
 };
 
-export default function TaskItem({ task, onChanged }: Props) {
+const STATUS_ORDER: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'COMPLETED'];
+
+function nextStatus(current: TaskStatus): TaskStatus {
+  const index = STATUS_ORDER.indexOf(current);
+  return STATUS_ORDER[(index + 1) % STATUS_ORDER.length];
+}
+
+export default function TaskItem({ task, onChanged, onEdit }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleNextStatus = async () => {
     setError(null);
     setLoading(true);
     try {
-      await updateTaskStatus(task.id, e.target.value as TaskStatus);
+      await updateTaskStatus(task.id, nextStatus(task.status));
       onChanged();
     } catch {
       setError('Failed to update status.');
@@ -58,45 +64,37 @@ export default function TaskItem({ task, onChanged }: Props) {
   });
 
   return (
-    <div className={`task-item ${loading ? 'task-item--loading' : ''}`}>
-      <div className="task-item__header">
-        <span className={`badge ${STATUS_CLASS[task.status]}`}>
-          {STATUS_LABELS[task.status]}
-        </span>
-        <span className="task-item__due">Due: {due}</span>
+    <>
+      <div
+        className="task"
+        style={loading ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+      >
+        <div>
+          <div className="task-title">{task.title}</div>
+          <div className="task-meta">{task.description || 'No description'}</div>
+        </div>
+
+        <div>
+          <span className={`badge ${STATUS_CLASS[task.status]}`}>
+            {STATUS_LABELS[task.status]}
+          </span>
+        </div>
+
+        <div>
+          <div className="task-meta">Due</div>
+          <div>{due}</div>
+        </div>
+
+        <div className="task-actions">
+          <button className="btn" onClick={() => onEdit(task)}>Edit</button>
+          <button className="btn" onClick={handleNextStatus}>Next Status</button>
+          <button className="btn danger" onClick={handleDelete}>Delete</button>
+        </div>
       </div>
 
-      <h3 className="task-item__title">{task.title}</h3>
-
-      {task.description && (
-        <p className="task-item__description">{task.description}</p>
+      {error && (
+        <div className="alert alert-error" style={{ marginTop: -4 }}>{error}</div>
       )}
-
-      {error && <div className="alert alert-error">{error}</div>}
-
-      <div className="task-item__actions">
-        <select
-          value={task.status}
-          onChange={handleStatusChange}
-          disabled={loading}
-          className="status-select"
-          aria-label="Change status"
-        >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-
-        <button
-          className="btn btn-danger"
-          onClick={handleDelete}
-          disabled={loading}
-        >
-          Delete
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
